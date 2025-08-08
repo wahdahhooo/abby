@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Happy Birthday — Abby</title>
+  <style>
+    :root{--bg:#0b1020;--card:#111623;--accent:#ff6b6b}
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial}
+    body{background:linear-gradient(120deg,var(--bg),#081028);color:#fff;display:flex;align-items:center;justify-content:center;padding:24px}
+
+    .card{width:100%;max-width:900px;background:linear-gradient(180deg,rgba(255,255,255,0.03),rgba(0,0,0,0.12));border-radius:12px;padding:20px;box-shadow:0 10px 30px rgba(2,6,23,0.6);overflow:hidden}
+
+    .header{display:flex;align-items:center;gap:16px}
+    .title{font-size:28px;font-weight:700;letter-spacing:0.3px}
+    .subtitle{font-size:14px;color:#c8d3ff}
+
+    .slideshow{position:relative;margin-top:18px;height:420px;border-radius:10px;overflow:hidden;background:#000}
+    .slide{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity 1000ms ease}
+    .slide img{width:100%;height:100%;object-fit:cover}
+    .slide.active{opacity:1}
+
+    .caption{position:absolute;left:16px;bottom:16px;background:linear-gradient(90deg,rgba(0,0,0,0.55),rgba(0,0,0,0.25));padding:10px 14px;border-radius:8px;font-weight:600}
+
+    .controls{display:flex;gap:8px;align-items:center;margin-top:12px}
+    .btn{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.06);padding:8px 12px;border-radius:8px;color:#fff;cursor:pointer}
+    .btn:active{transform:translateY(1px)}
+
+    .music-toggle{margin-left:auto;display:flex;gap:8px;align-items:center}
+
+    /* simple confetti (decorative) */
+    .confetti{pointer-events:none;position:absolute;inset:0;overflow:hidden}
+    .confetti i{position:absolute;top:-10%;width:10px;height:18px;opacity:0.95;transform:rotate(15deg);animation:fall 4s linear infinite}
+    .confetti i:nth-child(odd){border-radius:4px}
+    .confetti i:nth-child(2n){transform:rotate(-25deg)}
+    @keyframes fall{0%{transform:translateY(-10vh) rotate(0deg);opacity:1}100%{transform:translateY(120vh) rotate(540deg);opacity:0}}
+
+    /* small mobile tweaks */
+    @media (max-width:600px){.title{font-size:20px}.slideshow{height:300px}}
+  </style>
+</head>
+<body>
+  <div class="card" id="card">
+    <div class="header">
+      <div>
+        <div class="title">Barakallahu Fii Umrik</div>
+        <div class="subtitle">Sesendok ucapan dari seorang anak</div>
+      </div>
+      <div class="music-toggle">
+        <button class="btn" id="startBtn">Mulai Musik</button>
+        <button class="btn" id="pauseBtn">Jeda</button>
+      </div>
+    </div>
+
+    <div class="slideshow" id="slideshow">
+      <!-- Ganti src gambar dengan path/URL foto kamu -->
+      <div class="slide active"><img src="img/WhatsApp Image 2025-08-08 at 09.52.16.jpeg" alt="Foto 1"></div>
+      <div class="slide"><img src="img/WhatsApp Image 2025-08-08 at 09.52.17 (1).jpeg" alt="Foto 2"></div>
+      <div class="slide"><img src="img/WhatsApp Image 2025-08-08 at 09.52.17 (2).jpeg" alt="Foto 3"></div>
+      <div class="slide"><img src="img/WhatsApp Image 2025-08-08 at 09.52.17.jpeg" alt="Foto 4"></div>
+
+      <div class="confetti" id="confetti"></div>
+    </div>
+
+    <div class="controls">
+      <button class="btn" id="prev">‹ Sebelumnya</button>
+      <button class="btn" id="next">Berikutnya ›</button>
+      <label style="margin-left:8px">Interval (detik):
+        <input id="intervalInput" type="number" min="2" value="4" style="width:64px;margin-left:6px;padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:#fff">
+      </label>
+      <button class="btn" id="fullscreen">Fullscreen</button>
+    </div>
+
+    <!-- Audio: ganti src ke file mp3 kamu, atau biarkan default demo lagu instrumental gratis -->
+    <audio id="bgm" loop crossorigin>
+      <source src="audio/WhatsApp Audio 2025-08-08 at 10.12.06.mpeg" type="audio/mpeg">
+      Browser kamu tidak mendukung audio.
+    </audio>
+  </div>
+
+  <script>
+    // Slideshow logic
+    const slides = Array.from(document.querySelectorAll('.slide'))
+    let idx = 0
+    let intervalSec = Number(document.getElementById('intervalInput').value) || 4
+    let timer = null
+    const setActive = (i)=>{
+      slides.forEach((s,si)=> s.classList.toggle('active', si===i))
+      idx = ((i%slides.length)+slides.length)%slides.length
+    }
+    function next(){ setActive(idx+1) }
+    function prev(){ setActive(idx-1) }
+    function startAuto(){ stopAuto(); timer = setInterval(next, intervalSec*1000) }
+    function stopAuto(){ if(timer) { clearInterval(timer); timer=null } }
+
+    document.getElementById('next').addEventListener('click', ()=>{ next(); stopAuto(); })
+    document.getElementById('prev').addEventListener('click', ()=>{ prev(); stopAuto(); })
+
+    document.getElementById('intervalInput').addEventListener('change', (e)=>{
+      const v = Number(e.target.value)
+      if(v>=2){ intervalSec = v; startAuto(); }
+    })
+
+    document.getElementById('fullscreen').addEventListener('click', async ()=>{
+      const el = document.getElementById('card')
+      if(document.fullscreenElement) await document.exitFullscreen(); else await el.requestFullscreen()
+    })
+
+    // Music controls and autoplay handling
+    const audio = document.getElementById('bgm')
+    const startBtn = document.getElementById('startBtn')
+    const pauseBtn = document.getElementById('pauseBtn')
+
+    async function tryPlay(){
+      try{ await audio.play(); startBtn.textContent='Musik: On' }catch(e){ startBtn.textContent='Klik untuk mulai' }
+    }
+    startBtn.addEventListener('click', ()=>{ audio.play(); startBtn.textContent='Musik: On' })
+    pauseBtn.addEventListener('click', ()=>{ audio.pause(); startBtn.textContent='Musik: Off' })
+
+    // try autoplay once (may be blocked by browser)
+    window.addEventListener('load', ()=>{ tryPlay(); startAuto(); createConfetti(30) })
+
+    // Simple confetti generator (decorative)
+    function rand(min,max){return Math.random()*(max-min)+min}
+    function createConfetti(n){const wrap=document.getElementById('confetti');for(let i=0;i<n;i++){const el=document.createElement('i');el.style.left = rand(0,100)+'%';el.style.background = `hsl(${Math.floor(rand(0,360))} 90% 60%)`;el.style.animationDelay = rand(0,3)+'s';el.style.width = rand(6,14)+'px';el.style.height = rand(10,20)+'px';wrap.appendChild(el)} }
+
+    // Helpful tip: if browser blocks autoplay, click anywhere on card to start music & slideshow
+    document.getElementById('card').addEventListener('click', ()=>{
+      if(audio.paused){ audio.play().catch(()=>{}); }
+      if(!timer) startAuto()
+    })
+
+    // Replace image sources easily: drop files named photo1.jpg..photo4.jpg into same folder and uncomment the lines below
+    /*
+    const localImgs = ['photo1.jpg','photo2.jpg','photo3.jpg','photo4.jpg']
+    slides.forEach((s,i)=>{ s.querySelector('img').src = localImgs[i] })
+    */
+  </script>
+</body>
+</html>
